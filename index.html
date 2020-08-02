@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+	<meta charset="utf-8">
+	<script src="https://d3js.org/d3.v5.min.js"></script>
+  </head>
+
+<body>
+	<div id="earningdegviz"></div>
+  <script>
+	  var margin = {top: 10, right: 30, bottom: 30, left: 50},
+		width = 500 - margin.left - margin.right,
+		height = 450 - margin.top - margin.bottom;
+	
+	var svg = d3.select("#earningdegviz")
+		.append("svg")
+			.attr("width", width + margin.left + margin.right)
+			.attr("height", height + margin.top + margin.bottom)
+		.append("g")
+			.attr("transform",
+				"translate(" + margin.left + "," + margin.top + ")");
+
+  d3.csv("https://raw.githubusercontent.com/davehuh/davehuh-cs498.github.io/master/data/data.csv",
+	  function(d) {
+		return {
+			Year : d3.timeParse("%Y")(d.Year),
+			Median_Earning : +d["Median Earning"],
+			Tuition : +d.Tuition,
+			Education_Attainment : d["Education Attainment"],
+			ROI : +d.ROI
+		};
+
+	  }).then(function(data) {
+
+		console.log(data[0]);
+
+		  var x = d3.scaleTime()
+		    .domain(d3.extent(data, function(d) { return d.Year; }))
+		    .range([0, width]);
+		  svg.append("g")
+		    .attr("transform", "translate(0," + height +")")
+		    .call(d3.axisBottom(x));
+
+
+		  var y = d3.scaleLinear()
+		    .domain([0, d3.max(data, function(d) { return +d.ROI;  })])
+		    .range([height,0]);
+		  svg.append("g")
+		    .call(d3.axisLeft(y));
+
+		  svg.append("path")
+		    .datum(data)
+		    .attr("fill", "none")
+		    .attr("stroke", "steelblue")
+		    .attr("stroke-width", 1.5)
+		    .attr("d", d3.line()
+		      .x(function(d) { return x(d.Year); })
+		      .y(function(d) { return y(d.ROI); })
+		        )
+	  });
+
+
+
+  </script>
+</body>
+
+
+
+</html>
