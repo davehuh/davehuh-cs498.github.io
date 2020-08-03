@@ -3,7 +3,8 @@
   <head>
 	<meta charset="utf-8">
 	<script src="https://d3js.org/d3.v5.min.js"></script>
-	<h2> Return on investment on post secondary education in the U.S.</h2>
+	<h2> Return on investment on post secondary education in the U.S. (1995 - 2013)</h2>
+	<h4> All earnings and costs are fixed to 2017 US dollars</h4>
   </head>
 
 
@@ -20,10 +21,12 @@ div.tooltip {
 	border_radius: 10px;
 	pointer-events: none;
 }
+
 </style>
 
 <body> 
 	<!--Select button--> 
+	<label for="educationButton">Education Attainment: <br/></label>
 	<select id="educationButton"></select> 
 	
 	<!--Color scale--> 
@@ -33,7 +36,7 @@ div.tooltip {
 	<div id="earningdegviz"></div>
   <script>
 	  var margin = {top: 10, right: 30, bottom: 30, left: 50},
-		width = 500 - margin.left - margin.right,
+		width = 700 - margin.left - margin.right,
 		height = 450 - margin.top - margin.bottom;
 	
 	var div = d3.select("#earningdegviz").append("div")
@@ -47,7 +50,6 @@ div.tooltip {
 		.append("g")
 			.attr("transform",
 				"translate(" + margin.left + "," + margin.top + ")");
-
 
 <!--Read data-->
   d3.csv("https://raw.githubusercontent.com/davehuh/davehuh-cs498.github.io/master/data/data.csv",
@@ -65,6 +67,63 @@ div.tooltip {
 
 		  //List of groups
 		  var allEducationGroups = ["<Select Option>", "Some college, no degree", "Associates", "Bachelors", "Masters or higher degree"]
+
+		  // Responsive description module
+		  var info = [
+			  {key: "<Select Option>", 
+				  value: 
+				  "Tuitions have been steadily arising throughout the years. Same with earnings. Between the costs of education and their returns on investment, this visualization illustrates a message about which levels of education tend to yield more earnings. <br/><br/> Return on investment or ROI is calculated by accounting for three variables: Median earnings of selected education group, Aggregate median earnings across education groups, and tuition cost of selected education group. The formula in a way normalizes benefits and costs from higher and lower educations by comparing to aggregate median earnings. Higher the ROI the better."
+			  },
+			  {key: "Some college, no degree", 
+				  value: 
+				  "From the data, people who attended college but never earned a degree do not yield much from going to school. Returns tend to be close to zero or on the negative side."
+			  },
+			  {key: "Associates", 
+				  value: 
+				  "2 year programs or Associates degrees are affordable options to gain post secondary education in US. Because of its low tuition cost, the return on investment tends to be on the positive."
+			  },
+			  {key: "Bachelors", 
+				  value: 
+				  "Undergraduate tuition has much higher starting cost compared to the Associates degree. And the costs for Bachelors degrees have been rising steadily throughout the period, doubled from 1995 and 2013."
+			  },
+			  {key: "Masters or higher degree", 
+				  value: 
+				  "People with masters degree or higher earn more than those with undergraduate degrees. Compared to undergraduate tuition, graduate tuition has maintained similar costs."
+			  }
+		  ]
+
+		  var infoText = 
+		  svg.append("text")
+		          .attr("text-anchor", "start")
+			  .attr("x", width/15)
+		  	  .attr("y", height/2)
+		          .text("")
+		          .style("font-size", "12px")
+		          .attr("alignment-baseline", "left")
+
+                 function wrap(text, width) {
+                   text.each(function() {
+                     var text = d3.select(this),
+                         words = text.text().split(/\s+/).reverse(),
+                         word,
+                         line = [],
+                         lineNumber = 0,
+                         lineHeight = 1.1, // ems
+                         y = text.attr("y"),
+                         dy = parseFloat(text.attr("dy")),
+                         tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+                     while (word = words.pop()) {
+                       line.push(word);
+                       tspan.text(line.join(" "));
+                       if (tspan.node().getComputedTextLength() > width) {
+                         line.pop();
+                         tspan.text(line.join(" "));
+                         line = [word];
+                         tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+                       }
+                     }
+                   })
+                 }
 
 		  //Options for select button
 		  d3.select("#educationButton")
@@ -117,7 +176,9 @@ div.tooltip {
 		      .y(function(d) { return y(d.ROI); })
 		        )
 
+
 		  var formatYear = d3.timeFormat("%Y")
+		  var formatCurrency = d3.format(",")
 
 		  // Dots used for tooltip
 		  var dot = svg
@@ -134,11 +195,10 @@ div.tooltip {
 					     .style("opacity", .9);
 					  div.html("Year: " + formatYear(d.Year) + "<br/>" +
 						  "ROI: " + d.ROI + "<br/>" +	
-						  "Earning across education: " + d.All + "<br/>" + 
-						  "Median Earning: " + d.Median_Earning + "<br/>" +
-						  "Tuition: " + d.Tuition
-
-					  )
+						  "Earning across education: " + formatCurrency(d.All) + "<br/>" + 
+						  "Median Earning: " + formatCurrency(d.Median_Earning) + "<br/>" +
+						  "Tuition: " + formatCurrency(d.Tuition
+					  ))
 					  .style("left", (d3.event.pageX) + "px")
 					  .style("top", (d3.event.pageY - 28) + "px");
 				  })
@@ -176,7 +236,6 @@ div.tooltip {
 			  )
 				  .attr("stroke", function(d) { return myColor(selectedGroup) })
 
-
                           // update dots
 			  dot
 			      .data(filterEducationData)
@@ -186,6 +245,20 @@ div.tooltip {
 			      .attr("cx", function(d) { return x(d.Year); })
 			      .attr("cy", function(d) { return y(d.ROI); })
 
+                          var i;
+			  var description;
+			  for (i = 0; i < info.length; i++)
+			  {
+			     if (selectedGroup == info[i].key)
+			     {
+				  description = info[i].value;
+		   	     }
+			  }
+			  // update infotext
+			  infoText
+				  .text(description)
+			      .style("fill-opacity", 1)
+			      .call(wrap, 100)
 		  }
 
 		  // button selection and update
@@ -198,7 +271,8 @@ div.tooltip {
 
 <!--formula legend-->
 		  svg.append("text")
-			  .attr("x", width / 3 + 10)
+		          .attr("text-anchor", "end")
+			  .attr("x", width )
 		  	  .attr("y", height - 20)
 		          .text("ROI = (Median Earning - Earning across education) / Tuition")
 		          .style("font-size", "10px")
@@ -218,21 +292,13 @@ div.tooltip {
 		  svg.append("text")
 		          .attr("class", "y label")
 		          .attr("text-anchor", "end")
-			  .attr("x", -width/2)
-		  	  .attr("y", -25)
+			  .attr("x", -width/3)
+		  	  .attr("y", height/2 - 250)
 		          .text("ROI")
 		          .style("font-size", "12px")
 		          .attr("transform", "rotate(-90)")
 		          .attr("alignment-baseline", "middle")
-		        
-
 	  });
-
-
-
   </script>
 </body>
-
-
-
 </html>
