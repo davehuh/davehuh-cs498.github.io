@@ -3,6 +3,7 @@
   <head>
 	<meta charset="utf-8">
 	<script src="https://d3js.org/d3.v5.min.js"></script>
+
 	<h2> Return on investment on post secondary education in the U.S. (1995 - 2013)</h2>
 	<h4> All earnings and costs are fixed to 2017 US dollars</h4>
   </head>
@@ -34,8 +35,12 @@ div.tooltip {
 
 
 	<div id="earningdegviz"></div>
-  <script>
-	  var margin = {top: 10, right: 30, bottom: 30, left: 50},
+	<div id="description"></br>Tuitions have been steadily arising throughout the years. Same with earnings. Between the costs of education and their returns on investment, this visualization illustrates a message about which levels of education tend to yield more earnings. <br/><br/> Return on investment or ROI is calculated by accounting for three variables: Median earnings of selected education group, Aggregate median earnings across education groups, and tuition cost of selected education group. The formula in a way normalizes benefits and costs from higher and lower educations by comparing to aggregate median earnings. Higher the ROI the better.</div>
+
+
+<script>
+
+	var margin = {top: 10, right: 30, bottom: 30, left: 50},
 		width = 700 - margin.left - margin.right,
 		height = 450 - margin.top - margin.bottom;
 	
@@ -76,11 +81,11 @@ div.tooltip {
 			  },
 			  {key: "Some college, no degree", 
 				  value: 
-				  "From the data, people who attended college but never earned a degree do not yield much from going to school. Returns tend to be close to zero or on the negative side."
+				  "People who attend college but never earn a degree do not experience increasing in earnings from going to school. Returns tend to be close to zero or on the negative side."
 			  },
 			  {key: "Associates", 
 				  value: 
-				  "2 year programs or Associates degrees are affordable options to gain post secondary education in US. Because of its low tuition cost, the return on investment tends to be on the positive."
+				  "Two year programs or Associates degrees are affordable options to gain post secondary education in US. Because of its low tuition cost, the return on investment tends to be on the positive."
 			  },
 			  {key: "Bachelors", 
 				  value: 
@@ -88,42 +93,9 @@ div.tooltip {
 			  },
 			  {key: "Masters or higher degree", 
 				  value: 
-				  "People with masters degree or higher earn more than those with undergraduate degrees. Compared to undergraduate tuition, graduate tuition has maintained similar costs."
+				  "People with masters degree or higher earn more than those with undergraduate degrees. Compared to undergraduate tuition, graduate tuition has maintained similar costs. The difference is that the entire ROI line is higher than the line for Bachelors."
 			  }
 		  ]
-
-		  var infoText = 
-		  svg.append("text")
-		          .attr("text-anchor", "start")
-			  .attr("x", width/15)
-		  	  .attr("y", height/2)
-		          .text("")
-		          .style("font-size", "12px")
-		          .attr("alignment-baseline", "left")
-
-                 function wrap(text, width) {
-                   text.each(function() {
-                     var text = d3.select(this),
-                         words = text.text().split(/\s+/).reverse(),
-                         word,
-                         line = [],
-                         lineNumber = 0,
-                         lineHeight = 1.1, // ems
-                         y = text.attr("y"),
-                         dy = parseFloat(text.attr("dy")),
-                         tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
-                     while (word = words.pop()) {
-                       line.push(word);
-                       tspan.text(line.join(" "));
-                       if (tspan.node().getComputedTextLength() > width) {
-                         line.pop();
-                         tspan.text(line.join(" "));
-                         line = [word];
-                         tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
-                       }
-                     }
-                   })
-                 }
 
 		  //Options for select button
 		  d3.select("#educationButton")
@@ -254,11 +226,8 @@ div.tooltip {
 				  description = info[i].value;
 		   	     }
 			  }
-			  // update infotext
-			  infoText
-				  .text(description)
-			      .style("fill-opacity", 1)
-			      .call(wrap, 100)
+
+			  document.getElementById("description").innerHTML = description
 		  }
 
 		  // button selection and update
