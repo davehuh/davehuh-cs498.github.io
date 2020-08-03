@@ -5,13 +5,40 @@
 	<script src="https://d3js.org/d3.v5.min.js"></script>
   </head>
 
-<body>
+
+<style> /* set the CSS */
+div.tooltip {
+	position: absolute;
+	text-align: center;
+	width: 60px;
+	height: 28px;
+	padding: 2px;
+	font: 12px sans-serif;
+	background: lightsteelblue;
+	border: 0px;
+	border_radius: 10px;
+	pointer-events: none;
+}
+</style>
+
+<body> 
+	<!--Select button--> 
+	<select id="educationButton"></select> 
+	
+	<!--Color scale--> 
+	<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+
+
 	<div id="earningdegviz"></div>
   <script>
 	  var margin = {top: 10, right: 30, bottom: 30, left: 50},
 		width = 500 - margin.left - margin.right,
 		height = 450 - margin.top - margin.bottom;
 	
+	var div = d3.select("#earningdegviz").append("div")
+			.attr("class", "tooltip")
+			.style("opacity", 0);
+
 	var svg = d3.select("#earningdegviz")
 		.append("svg")
 			.attr("width", width + margin.left + margin.right)
@@ -20,6 +47,8 @@
 			.attr("transform",
 				"translate(" + margin.left + "," + margin.top + ")");
 
+
+<!--Read data-->
   d3.csv("https://raw.githubusercontent.com/davehuh/davehuh-cs498.github.io/master/data/data.csv",
 	  function(d) {
 		return {
@@ -32,7 +61,24 @@
 
 	  }).then(function(data) {
 
-		console.log(data[0]);
+		  //List of groups
+		  var allEducationGroups = ["<Select Option>", "Some college, no degree", "Associates", "Bachelors", "Masters or higher degree"]
+
+		  //Options for select button
+		  d3.select("#educationButton")
+		    .selectAll('myOptions')
+		       .data(allEducationGroups)
+		    .enter()
+		       .append('option')
+		    .text(function (d) { return d; })
+		    .attr("value", function(d) {return d;})
+
+
+		  // Color scale one for each education group
+		  var myColor = d3.scaleOrdinal()
+		    .domain(allEducationGroups)
+		    .range(d3.schemeSet2);
+
 
 		  var x = d3.scaleTime()
 		    .domain(d3.extent(data, function(d) { return d.Year; }))
@@ -43,20 +89,109 @@
 
 
 		  var y = d3.scaleLinear()
-		    .domain([0, d3.max(data, function(d) { return +d.ROI;  })])
+		    .domain([d3.min(data, function(d) { return +d.ROI;  }), d3.max(data, function(d) { return +d.ROI;  })])
 		    .range([height,0]);
 		  svg.append("g")
 		    .call(d3.axisLeft(y));
 
-		  svg.append("path")
-		    .datum(data)
+		  var initialData = data.filter(function(d, i)
+			  {
+				  if (d["Education_Attainment"] == "All")
+				  {
+					return d;
+				  }
+			  }
+
+		  )
+
+		  var line = svg
+		    .append("path")
+		    .datum(initialData)
 		    .attr("fill", "none")
-		    .attr("stroke", "steelblue")
+	            .attr("stroke", function(d) {return myColor("All")})
 		    .attr("stroke-width", 1.5)
 		    .attr("d", d3.line()
 		      .x(function(d) { return x(d.Year); })
 		      .y(function(d) { return y(d.ROI); })
 		        )
+
+		  var formatYear = d3.timeFormat("%Y")
+
+		  // Dots used for tooltip
+		  var dot = svg
+		    .selectAll("dot")
+		        .data(initialData)
+	            .enter().append("circle")
+		        .attr("r", 4)
+			  .attr("cx", function(d) { return x(d.Year); })
+			  .attr("cy", function(d) { return y(d.ROI); })
+		          .on("mouseover", function(d)
+				  {
+					  div.transition()
+					     .duration(200)
+					     .style("opacity", .9);
+					  div.html("Year: " + formatYear(d.Year) + "<br/>" +
+						"ROI: " + d.ROI	
+					  )
+					  .style("left", (d3.event.pageX) + "px")
+					  .style("top", (d3.event.pageY - 28) + "px");
+				  })
+		    .on("mouseout", function(d)
+			    {
+				    div.transition()
+				       .duration(500)
+				       .style("opacity", 0);
+			    }
+
+		    )
+
+
+		  // An update function for the chart
+		  function update(selectedGroup) {
+
+			  // New data with the selection
+			  var filterEducationData = data.filter(function(d, i)
+				  {
+					  if (d["Education_Attainment"] == selectedGroup)
+					  {
+						  return d;
+					  }
+				  }
+			  )
+
+			  // update line
+			  line
+			      .datum(filterEducationData)
+			      .transition()
+			      .duration(1000)
+			      .attr("d", d3.line()
+     		                 .x(function(d) { return x(d.Year); })
+     		                 .y(function(d) { return y(d.ROI); })
+			  )
+				  .attr("stroke", function(d) { return myColor(selectedGroup) })
+
+
+                          // update dots
+			  dot
+			      .data(filterEducationData)
+			      .transition()
+			      .duration(1000)
+		              .attr("r", 4)
+			      .attr("cx", function(d) { return x(d.Year); })
+			      .attr("cy", function(d) { return y(d.ROI); })
+
+			      
+
+		  }
+
+		  // button selection and update
+		  d3.select("#educationButton").on("change", function(d)
+			  {
+				  var selectedOption = d3.select(this).property("value")
+				  update(selectedOption)
+			  }
+		  )
+
 	  });
 
 
